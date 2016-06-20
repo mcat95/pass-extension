@@ -49,11 +49,11 @@ const PasswordManager = new Lang.Class({
     let data = out.toString().split("\n").slice(1).map(element => ({
       directory: element[0] === 'd',
       name: element.split(" ").slice(-1)[0],
-    }));
+    })).filter(element => element.name !== "");
     data.forEach(element => {
       let menuElement = element.directory ?
         new PopupMenu.PopupSubMenuMenuItem(element.name) :
-        new PopupMenu.PopupMenuItem(element.name);
+        new PopupMenu.PopupMenuItem(element.name.split(".").slice(0,-1).join("."));
       this.menu.addMenuItem(menuElement);
     });
   }
