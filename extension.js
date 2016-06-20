@@ -1,53 +1,40 @@
-
-const St = imports.gi.St;
+const GLib = imports.gi.GLib;
+const Lang = imports.lang;
 const Main = imports.ui.main;
-const Tweener = imports.ui.tweener;
+const PanelMenu = imports.ui.panelMenu;
+const PopupMenu = imports.ui.popupMenu;
+const St = imports.gi.St;
+const ExtensionUtils = imports.misc.extensionUtils;
+const Me = ExtensionUtils.getCurrentExtension();
+const Util = imports.misc.util;
 
-let text, button;
+const PasswordManager = new Lang.Class({
+  Name: 'PasswordManager',
+  Extends: PanelMenu.Button,
 
-function _hideHello() {
-    Main.uiGroup.remove_actor(text);
-    text = null;
-}
+  _init: function() {
+    PanelMenu.Button.prototype._init.call(this, 0.0);
 
-function _showHello() {
-    if (!text) {
-        text = new St.Label({ style_class: 'helloworld-label', text: "Hello, world!" });
-        Main.uiGroup.add_actor(text);
-    }
+    let hbox = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
+    let icon = new St.Icon({icon_name: 'system-run-symbolic', style_class: 'system-status-icon'});
+    hbox.add_child(icon);
 
-    text.opacity = 255;
+    this.actor.add_actor(hbox);
+    this.actor.add_style_class_name('panel-status-button');
 
-    let monitor = Main.layoutManager.primaryMonitor;
+    Main.panel.addToStatusArea('passwordManager', this);
 
-    text.set_position(monitor.x + Math.floor(monitor.width / 2 - text.width / 2),
-                      monitor.y + Math.floor(monitor.height / 2 - text.height / 2));
+    let item = new PopupMenu.PopupMenuItem("This is a test");
+    this.menu.addMenuItem(item);
+  },
+});
 
-    Tweener.addTween(text,
-                     { opacity: 0,
-                       time: 2,
-                       transition: 'easeOutQuad',
-                       onComplete: _hideHello });
-}
-
-function init() {
-    button = new St.Bin({ style_class: 'panel-button',
-                          reactive: true,
-                          can_focus: true,
-                          x_fill: true,
-                          y_fill: false,
-                          track_hover: true });
-    let icon = new St.Icon({ icon_name: 'system-run-symbolic',
-                             style_class: 'system-status-icon' });
-
-    button.set_child(icon);
-    button.connect('button-press-event', _showHello);
-}
+let passwordManager;
 
 function enable() {
-    Main.panel._rightBox.insert_child_at_index(button, 0);
+  passwordManager = new PasswordManager();
 }
 
 function disable() {
-    Main.panel._rightBox.remove_child(button);
+  serviceManager.destroy();
 }
