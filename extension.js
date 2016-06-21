@@ -40,7 +40,13 @@ const PasswordManager = new Lang.Class({
   },
 
   _draw_directory: function(){
+    this.menu.removeAll();
     let item = new PopupMenu.PopupMenuItem(this._current_directory);
+    item.connect('activate', Lang.bind(this, function() {
+      if(this._current_directory !== "./")
+        this._current_directory = this._current_directory.split("/").slice(0,-2).join("/") + "/"
+      this._draw_directory();
+    }));
     this.menu.addMenuItem(item);
     this.menu.addMenuItem(new SeparatorMenuItem());
 
@@ -51,9 +57,22 @@ const PasswordManager = new Lang.Class({
       name: element.split(" ").slice(-1)[0],
     })).filter(element => element.name !== "");
     data.forEach(element => {
-      let menuElement = element.directory ?
-        new PopupMenu.PopupSubMenuMenuItem(element.name) :
-        new PopupMenu.PopupMenuItem(element.name.split(".").slice(0,-1).join("."));
+      let menuElement;
+      if(element.directory){
+        menuElement = new PopupMenu.PopupMenuItem(element.name+"/");
+        menuElement.connect('activate', Lang.bind(this, function() {
+          this._current_directory+=element.name+"/";
+          this._draw_directory();
+        }));
+      }else{
+        let name = element.name.split(".").slice(0,-1).join(".")
+        menuElement = new PopupMenu.PopupMenuItem(name);
+        menuElement.connect('activate', Lang.bind(this, function() {
+          let cmd2 = "pass -c "+this._current_directory+name;
+          let out = GLib.spawn_command_line_async(cmd2);
+          log(out);
+        }));
+      }
       this.menu.addMenuItem(menuElement);
     });
   }
