@@ -1,5 +1,7 @@
 # Passwordstore gnome manager
 
+**Important**: The extension requires you to have properly installed and configured pass
+
 Gnome-shell extension to access your passwords from the password store [pass](https://www.passwordstore.org/).
 
 ### Installing
