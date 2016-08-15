@@ -9,6 +9,15 @@ const Me = ExtensionUtils.getCurrentExtension();
 const Util = imports.misc.util;
 const Clutter = imports.gi.Clutter;
 
+const IconMenuItem = new Lang.Class({
+  Name: 'IconMenuItem',
+  Extends: PopupMenu.PopupMenuItem,
+  _init: function (icon_name, text) {
+    this.parent(text);
+    let icon = new St.Icon({icon_name: icon_name, icon_size: 25});
+    this.actor.insert_child_at_index(icon,1);
+  },
+});
 
 const SeparatorMenuItem = new Lang.Class({
   Name: 'SeparatorMenuItem',
@@ -59,14 +68,14 @@ const PasswordManager = new Lang.Class({
     data.forEach(element => {
       let menuElement;
       if(element.directory){
-        menuElement = new PopupMenu.PopupMenuItem(element.name+"/");
+        menuElement = new IconMenuItem('folder', element.name+"/");
         menuElement.connect('activate', Lang.bind(this, function() {
           this._current_directory+=element.name+"/";
           this._draw_directory();
         }));
       }else{
-        let name = element.name.split(".").slice(0,-1).join(".")
-        menuElement = new PopupMenu.PopupMenuItem(name);
+        let name = element.name.split(".").slice(0,-1).join(".");
+        menuElement = new IconMenuItem('channel-secure',name);
         menuElement.connect('activate', Lang.bind(this, function() {
           let cmd2 = "pass -c "+this._current_directory+name;
           let out = GLib.spawn_command_line_async(cmd2);
