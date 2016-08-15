@@ -5,8 +5,17 @@
 Gnome-shell extension to access your passwords from the password store [pass](https://www.passwordstore.org/).
 
 ### Installing
-Since the extension is not yet on the gnome shell extension store, you can clone the repository in
-`.local/share/gnome-shell/extensions`
+
+The recommended method of instalation is using the gnome shell extensions website. Just go [here](https://extensions.gnome.org/extension/1093/passwordstore-manager/) and install the extension.
+
+You can also install the extension manually, by cloning the repository in
+`.local/share/gnome-shell/extensions` and rename it with the name "passwordstore@mcat95.gmail.com"
+
+You can do that with the following command:
+```
+git clone git@github.com:mcat95/pass-extension.git ~/.local/share/gnome-shell/extensions/passwordstore@mcat95.gmail.com
+```
+You may have to open gnome-tweak-tool and enable the extension.
 
 ## How it works
 - Click on a folder to open it
