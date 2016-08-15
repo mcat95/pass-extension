@@ -3,6 +3,7 @@
   "uuid": "passwordstore@mcat95.gmail.com",
   "name": "Passwordstore manager",
   "shell-version": [
-    "3.20.2"
-  ]
+    "3.20"
+  ],
+  "version": 1
 }
