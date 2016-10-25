@@ -64,7 +64,16 @@ const PasswordManager = new Lang.Class({
     let data = out.toString().split("\n").slice(1).map(element => ({
       directory: element[0] === 'd',
       name: element.split(" ").slice(-1)[0],
-    })).filter(element => element.name !== "");
+    })).filter(element => element.name !== "")
+    .sort(function(a, b) {
+      if (a.directory && !b.directory) {
+        return -1;
+      }else if (b.directory && !a.directory) {
+        return 1;
+      } else {
+        return a.name > b.name;
+      }
+    });
     data.forEach(element => {
       let menuElement;
       if(element.directory){
