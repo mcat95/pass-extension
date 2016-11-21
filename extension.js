@@ -6,6 +6,7 @@ const PopupMenu = imports.ui.popupMenu;
 const St = imports.gi.St;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
+const ScrollablePopupMenu = Me.imports.scrollablePopupMenu.ScrollablePopupMenu;
 const Util = imports.misc.util;
 const Clutter = imports.gi.Clutter;
 
@@ -38,6 +39,9 @@ const PasswordManager = new Lang.Class({
 
   _init: function() {
     PanelMenu.Button.prototype._init.call(this, 0.0);
+
+    this.popupMenu = new ScrollablePopupMenu(this.actor, St.Align.START, St.Side.TOP);
+    this.setMenu(this.popupMenu);
 
     let hbox = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
     let icon = new St.Icon({icon_name: 'dialog-password-symbolic', style_class: 'system-status-icon'});
