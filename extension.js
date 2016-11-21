@@ -103,5 +103,5 @@ function enable() {
 }
 
 function disable() {
-  serviceManager.destroy();
+  passwordManager.destroy();
 }
