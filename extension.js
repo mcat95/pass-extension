@@ -1,4 +1,5 @@
 const GLib = imports.gi.GLib;
+const Gio = imports.gi.Gio;
 const Lang = imports.lang;
 const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
@@ -63,22 +64,27 @@ const PasswordManager = new Lang.Class({
     this.menu.addMenuItem(item);
     this.menu.addMenuItem(new SeparatorMenuItem());
 
-    let cmd = "ls -l .password-store/"+this._current_directory;
-    let [res, out, err, status] = GLib.spawn_command_line_sync(cmd);
-    let data = out.toString().split("\n").slice(1).map(element => ({
-      directory: element[0] === 'd',
-      name: element.split(" ").slice(-1)[0],
-    })).filter(element => element.name !== "")
-    .sort(function(a, b) {
+    let fd = Gio.file_new_for_path(".password-store/"+this._current_directory);
+    let enumerator = fd.enumerate_children("standard::*", 0, null);
+    let data = [];
+    var entry;
+    while (entry = enumerator.next_file(null)) {
+      if (entry.get_name()[0] == '.')
+        continue;
+      data.push({
+        directory: entry.get_file_type() == Gio.FileType.DIRECTORY,
+        name: entry.get_name(),
+      });
+    }
+    data.sort(function(a, b) {
       if (a.directory && !b.directory) {
         return -1;
-      }else if (b.directory && !a.directory) {
+      } else if (b.directory && !a.directory) {
         return 1;
       } else {
         return a.name > b.name;
       }
-    });
-    data.forEach(element => {
+    }).forEach(element => {
       let menuElement;
       if(element.directory){
         menuElement = new IconMenuItem('folder', element.name+"/");
@@ -90,8 +96,13 @@ const PasswordManager = new Lang.Class({
         let name = element.name.split(".").slice(0,-1).join(".");
         menuElement = new IconMenuItem('channel-secure',name);
         menuElement.connect('activate', Lang.bind(this, function() {
-          let cmd2 = "pass -c "+this._current_directory+name;
-          let out = GLib.spawn_command_line_async(cmd2);
+          let out = GLib.spawn_async(
+            null,
+            ['pass', '-c', this._current_directory + name],
+            null,
+            GLib.SpawnFlags.SEARCH_PATH,
+            null
+          );
           log(out);
         }));
       }
