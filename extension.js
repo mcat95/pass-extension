@@ -39,12 +39,13 @@ const SeparatorMenuItem = new Lang.Class({
 const PasswordManager = new Lang.Class({
   Name: 'PasswordManager',
   Extends: PanelMenu.Button,
-  _current_directory: './',
+  _current_directory: '/',
 
   _init: function() {
     PanelMenu.Button.prototype._init.call(this, 0.0);
 
     let popupMenu = new ScrollablePopupMenu(this.actor, St.Align.START, St.Side.TOP);
+    this.popupMenu = popupMenu;
     this.setMenu(popupMenu);
 
     let hbox = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
@@ -53,28 +54,31 @@ const PasswordManager = new Lang.Class({
     hbox.add_child(icon);
     this.actor.add_actor(hbox);
     Main.panel.addToStatusArea('passwordManager', this);
-    this._draw_directory(popupMenu);
+    this._draw_directory();
 
     Main.wm.addKeybinding(
       "show-menu-keybinding",
       Convenience.getSettings(),
       Meta.KeyBindingFlags.NONE,
       Shell.ActionMode.NORMAL,
-      () => {
-        popupMenu.open();
-        popupMenu.box.get_children()[0].grab_key_focus();
-      }
+      Lang.bind(this, () => {
+        this.popupMenu.open();
+        this.popupMenu.box.get_children()[0].grab_key_focus();
+      })
     );
   },
 
-  _draw_directory: function(popupMenu){
+  _change_dir: function(dir) {
+    this._current_directory = dir;
+    this._draw_directory();
+    this.popupMenu.box.get_children()[0].grab_key_focus();
+  },
+
+  _draw_directory: function() {
     this.menu.removeAll();
     let item = new IconMenuItem('go-up',this._current_directory);
     item.connect('activate', Lang.bind(this, function() {
-      if(this._current_directory !== "./")
-        this._current_directory = this._current_directory.split("/").slice(0,-2).join("/") + "/"
-      this._draw_directory(popupMenu);
-      popupMenu.box.get_children()[0].grab_key_focus();
+      this._change_dir(this._current_directory.split("/").slice(0,-2).join("/") + "/");
     }));
     this.menu.addMenuItem(item);
     this.menu.addMenuItem(new SeparatorMenuItem());
@@ -101,14 +105,12 @@ const PasswordManager = new Lang.Class({
       }
     }).forEach(element => {
       let menuElement;
-      if(element.directory){
+      if(element.directory) {
         menuElement = new IconMenuItem('folder', element.name+"/");
         menuElement.connect('activate', Lang.bind(this, function() {
-          this._current_directory+=element.name+"/";
-          this._draw_directory(popupMenu);
-          popupMenu.box.get_children()[0].grab_key_focus();
+          this._change_dir(this._current_directory + element.name + "/");
         }));
-      }else{
+      } else {
         let name = element.name.split(".").slice(0,-1).join(".");
         menuElement = new IconMenuItem('channel-secure',name);
         menuElement.connect('activate', Lang.bind(this, function() {
