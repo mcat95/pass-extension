@@ -44,8 +44,9 @@ const PasswordManager = new Lang.Class({
   _init: function() {
     PanelMenu.Button.prototype._init.call(this, 0.0);
 
-    this.popupMenu = new ScrollablePopupMenu(this.actor, St.Align.START, St.Side.TOP);
-    this.setMenu(this.popupMenu);
+    let popupMenu = new ScrollablePopupMenu(this.actor, St.Align.START, St.Side.TOP);
+    this.popupMenu = popupMenu;
+    this.setMenu(popupMenu);
 
     let hbox = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
     let icon = new St.Icon({icon_name: 'dialog-password-symbolic', style_class: 'system-status-icon'});
@@ -75,7 +76,7 @@ const PasswordManager = new Lang.Class({
 
   _draw_directory: function() {
     this.menu.removeAll();
-    let item = new PopupMenu.PopupMenuItem(this._current_directory);
+    let item = new IconMenuItem('go-up',this._current_directory);
     item.connect('activate', Lang.bind(this, function() {
       this._change_dir(this._current_directory.split("/").slice(0,-2).join("/") + "/");
     }));
@@ -107,7 +108,7 @@ const PasswordManager = new Lang.Class({
       if(element.directory) {
         menuElement = new IconMenuItem('folder', element.name+"/");
         menuElement.connect('activate', Lang.bind(this, function() {
-          this._change_dir(this._current_directory + element.name + "/")
+        this._change_dir(this._current_directory + element.name + "/");
         }));
       } else {
         let name = element.name.split(".").slice(0,-1).join(".");
