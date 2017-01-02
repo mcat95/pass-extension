@@ -2,12 +2,15 @@ const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const Lang = imports.lang;
 const Main = imports.ui.main;
+const Meta = imports.gi.Meta;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 const St = imports.gi.St;
+const Shell = imports.gi.Shell;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 const ScrollablePopupMenu = Me.imports.scrollablePopupMenu.ScrollablePopupMenu;
+const Convenience = Me.imports.convenience;
 const Util = imports.misc.util;
 const Clutter = imports.gi.Clutter;
 
@@ -41,8 +44,8 @@ const PasswordManager = new Lang.Class({
   _init: function() {
     PanelMenu.Button.prototype._init.call(this, 0.0);
 
-    this.popupMenu = new ScrollablePopupMenu(this.actor, St.Align.START, St.Side.TOP);
-    this.setMenu(this.popupMenu);
+    let popupMenu = new ScrollablePopupMenu(this.actor, St.Align.START, St.Side.TOP);
+    this.setMenu(popupMenu);
 
     let hbox = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
     let icon = new St.Icon({icon_name: 'dialog-password-symbolic', style_class: 'system-status-icon'});
@@ -51,6 +54,17 @@ const PasswordManager = new Lang.Class({
     this.actor.add_actor(hbox);
     Main.panel.addToStatusArea('passwordManager', this);
     this._draw_directory();
+
+    Main.wm.addKeybinding(
+      "show-menu-keybinding",
+      Convenience.getSettings(),
+      Meta.KeyBindingFlags.NONE,
+      Shell.ActionMode.NORMAL,
+      () => {
+        popupMenu.open();
+        popupMenu.box.get_children()[0].grab_key_focus();
+      }
+    );
   },
 
   _draw_directory: function(){
@@ -118,5 +132,6 @@ function enable() {
 }
 
 function disable() {
+  Main.wm.removeKeybinding("show-menu-keybinding");
   passwordManager.destroy();
 }
