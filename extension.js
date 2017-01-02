@@ -53,7 +53,7 @@ const PasswordManager = new Lang.Class({
     hbox.add_child(icon);
     this.actor.add_actor(hbox);
     Main.panel.addToStatusArea('passwordManager', this);
-    this._draw_directory();
+    this._draw_directory(popupMenu);
 
     Main.wm.addKeybinding(
       "show-menu-keybinding",
@@ -67,13 +67,14 @@ const PasswordManager = new Lang.Class({
     );
   },
 
-  _draw_directory: function(){
+  _draw_directory: function(popupMenu){
     this.menu.removeAll();
     let item = new PopupMenu.PopupMenuItem(this._current_directory);
     item.connect('activate', Lang.bind(this, function() {
       if(this._current_directory !== "./")
         this._current_directory = this._current_directory.split("/").slice(0,-2).join("/") + "/"
-      this._draw_directory();
+      this._draw_directory(popupMenu);
+      popupMenu.box.get_children()[0].grab_key_focus();
     }));
     this.menu.addMenuItem(item);
     this.menu.addMenuItem(new SeparatorMenuItem());
@@ -104,7 +105,8 @@ const PasswordManager = new Lang.Class({
         menuElement = new IconMenuItem('folder', element.name+"/");
         menuElement.connect('activate', Lang.bind(this, function() {
           this._current_directory+=element.name+"/";
-          this._draw_directory();
+          this._draw_directory(popupMenu);
+          popupMenu.box.get_children()[0].grab_key_focus();
         }));
       }else{
         let name = element.name.split(".").slice(0,-1).join(".");
