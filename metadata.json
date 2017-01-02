@@ -1,6 +1,7 @@
 {
   "description": "Access your passwords from pass (passwordstore.org) from the gnome-shell",
   "uuid": "passwordstore@mcat95.gmail.com",
+  "settings-schema": "org.gnome.shell.extensions.passwordstore",
   "name": "Passwordstore manager",
   "shell-version": [
     "3.20"
