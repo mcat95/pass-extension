@@ -73,7 +73,7 @@ const PasswordManager = new Lang.Class({
     this.popupMenu.box.get_children()[0].grab_key_focus();
   },
 
-  _draw_directory: function(){
+  _draw_directory: function() {
     this.menu.removeAll();
     let item = new PopupMenu.PopupMenuItem(this._current_directory);
     item.connect('activate', Lang.bind(this, function() {
@@ -104,12 +104,12 @@ const PasswordManager = new Lang.Class({
       }
     }).forEach(element => {
       let menuElement;
-      if(element.directory){
+      if(element.directory) {
         menuElement = new IconMenuItem('folder', element.name+"/");
         menuElement.connect('activate', Lang.bind(this, function() {
           this._change_dir(this._current_directory + element.name + "/")
         }));
-      }else{
+      } else {
         let name = element.name.split(".").slice(0,-1).join(".");
         menuElement = new IconMenuItem('channel-secure',name);
         menuElement.connect('activate', Lang.bind(this, function() {
