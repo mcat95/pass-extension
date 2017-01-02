@@ -69,7 +69,7 @@ const PasswordManager = new Lang.Class({
 
   _draw_directory: function(popupMenu){
     this.menu.removeAll();
-    let item = new PopupMenu.PopupMenuItem(this._current_directory);
+    let item = new IconMenuItem('go-up',this._current_directory);
     item.connect('activate', Lang.bind(this, function() {
       if(this._current_directory !== "./")
         this._current_directory = this._current_directory.split("/").slice(0,-2).join("/") + "/"
