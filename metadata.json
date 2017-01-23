@@ -4,7 +4,8 @@
   "settings-schema": "org.gnome.shell.extensions.passwordstore",
   "name": "Passwordstore manager",
   "shell-version": [
-    "3.20"
+    "3.20",
+    "3.22"
   ],
   "version": 3
 }
