@@ -94,7 +94,7 @@ const PassSearchProvider = new Lang.Class({
         createIcon: function(size) {
           return new St.Icon({
             icon_size: size,
-            icon_name: 'dialog-password-symbolic',
+            icon_name: 'channel-secure',
           });
         },
       };
