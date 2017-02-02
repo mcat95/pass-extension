@@ -13,6 +13,18 @@ const ScrollablePopupMenu = Me.imports.scrollablePopupMenu.ScrollablePopupMenu;
 const Convenience = Me.imports.convenience;
 const Util = imports.misc.util;
 const Clutter = imports.gi.Clutter;
+const Search = imports.ui.search;
+
+const getPassword = route => GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, function() {
+  let out = GLib.spawn_async(
+    null,
+    ['pass', '-c', route],
+    null,
+    GLib.SpawnFlags.SEARCH_PATH,
+    null
+  );
+  return false; // Don't repeat
+}, null);
 
 const IconMenuItem = new Lang.Class({
   Name: 'IconMenuItem',
@@ -36,12 +48,75 @@ const SeparatorMenuItem = new Lang.Class({
   },
 });
 
+const PassSearchProvider = new Lang.Class({
+  Name: 'PassSearchProvider',
+  Extends: Search.SearchProvider,
+
+  _results: [],
+
+  _init: function(getPassword){
+    this._getPassword = getPassword;
+  },
+  
+  _insertResults: function(routes){
+    return routes.filter(r => r).map(route => {
+      if(this._results.some(res => res.route === route)){
+        return this._results.reduce((prev, curr, i) => curr.route === route ? i : prev, 0);
+      } else {
+        return this._results.push({
+          route: route, //Complete route
+          name: route.split("/").slice(-1).join("/").split(".").slice(0,-1).join('.'), //Only last 2 terms
+          partialRoute: route.split('/').slice(1).join('/').split('.').slice(0,-1).join('.') //All except password directory,
+        }) - 1;
+      }
+    });
+  },
+  
+  getInitialResultSet: function(terms, callback, cancellable){
+    let cmd = "find .password-store -regextype awk -regex '"+terms.map(term => ".*"+term+".*\.gpg").join("|")+"'";
+    let [res, out, err, status] = GLib.spawn_command_line_sync(cmd);
+    res = this._insertResults(out.toString().split('\n'));
+    callback(res);
+  },
+  
+  getSubsearchResultSet: function(prevRes, terms, callback, cancellable){
+    this.getInitialResultSet(terms, callback, cancellable);
+  },
+  
+  getResultMetas: function(results, callback, cancellable){
+    const lresults = this._results;
+    callback(results.map(function(resultId){
+      return {
+        id: resultId,
+        name: lresults[resultId].name,
+        description: 'Password for '+lresults[resultId].route,
+        createIcon: function(size) {
+          return new St.Icon({
+            icon_size: size,
+            icon_name: 'dialog-password',
+          });
+        },
+      };
+    }));
+  },
+  
+  activateResult: function(result, terms){
+    this._getPassword(this._results[result].partialRoute);
+  },
+  
+  filterResults: function(providerResults, maxResults) {
+    return providerResults.slice(0,maxResults);
+  },
+});
+
+
 const PasswordManager = new Lang.Class({
   Name: 'PasswordManager',
   Extends: PanelMenu.Button,
   _current_directory: '/',
 
-  _init: function() {
+  _init: function(getPassword) {
+    this._getPassword = getPassword;
     PanelMenu.Button.prototype._init.call(this, 0.0);
 
     let popupMenu = new ScrollablePopupMenu(this.actor, St.Align.START, St.Side.TOP);
@@ -112,16 +187,9 @@ const PasswordManager = new Lang.Class({
         }));
       } else {
         let name = element.name.split(".").slice(0,-1).join(".");
-        menuElement = new IconMenuItem('channel-secure',name);
-        menuElement.connect('activate', Lang.bind(this, function() {
-          let out = GLib.spawn_async(
-            null,
-            ['pass', '-c', this._current_directory + name],
-            null,
-            GLib.SpawnFlags.SEARCH_PATH,
-            null
-          );
-          log(out);
+        menuElement = new IconMenuItem('dialog-password',name);
+        menuElement.connect('activate', Lang.bind(this, function(){
+          this._getPassword(this._current_directory + name);
         }));
       }
       this.menu.addMenuItem(menuElement);
@@ -130,12 +198,22 @@ const PasswordManager = new Lang.Class({
 });
 
 let passwordManager;
+let searchProvider;
 
 function enable() {
-  passwordManager = new PasswordManager();
+  passwordManager = new PasswordManager(getPassword);
+  searchProvider = new PassSearchProvider(getPassword);
+  Main.overview.viewSelector._searchResults._registerProvider(
+    searchProvider
+  );
+  //Main.overview.addSearchProvider(new PassSearchProvider());
+  log("Search provider added");
 }
 
 function disable() {
   Main.wm.removeKeybinding("show-menu-keybinding");
   passwordManager.destroy();
+  Main.overview.viewSelector._searchResults._unregisterProvider(
+    searchProvider
+  );
 }
