@@ -85,7 +85,6 @@ const PassSearchProvider = new Lang.Class({
   
   getResultMetas: function(results, callback, cancellable){
     const lresults = this._results;
-    log("Meta" + results);
     callback(results.map(function(resultId){
       return {
         id: resultId,
@@ -94,7 +93,7 @@ const PassSearchProvider = new Lang.Class({
         createIcon: function(size) {
           return new St.Icon({
             icon_size: size,
-            icon_name: 'channel-secure',
+            icon_name: 'dialog-password',
           });
         },
       };
@@ -188,8 +187,7 @@ const PasswordManager = new Lang.Class({
         }));
       } else {
         let name = element.name.split(".").slice(0,-1).join(".");
-        menuElement = new IconMenuItem('channel-secure',name);
-        log(this._getPassword);
+        menuElement = new IconMenuItem('dialog-password',name);
         menuElement.connect('activate', Lang.bind(this, function(){
           this._getPassword(this._current_directory + name);
         }));
