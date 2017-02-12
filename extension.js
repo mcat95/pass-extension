@@ -183,7 +183,7 @@ const PasswordManager = new Lang.Class({
       if(element.directory) {
         menuElement = new IconMenuItem('folder', element.name+"/");
         menuElement.connect('activate', Lang.bind(this, function() {
-          this._change_dir(this._current_directory + element.name + "/");
+        this._change_dir(this._current_directory + element.name + "/");
         }));
       } else {
         let name = element.name.split(".").slice(0,-1).join(".");
