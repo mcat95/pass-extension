@@ -26,39 +26,32 @@ const getPassword = route => GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, functi
   return false; // Don't repeat
 }, null);
 
-const IconMenuItem = new Lang.Class({
-  Name: 'IconMenuItem',
-  Extends: PopupMenu.PopupMenuItem,
-  _init: function (icon_name, text) {
-    this.parent(text);
+class IconMenuItem extends PopupMenu.PopupMenuItem {
+  constructor(icon_name, text) {
+    super(text);
     let icon = new St.Icon({icon_name: icon_name, icon_size: 25});
     this.actor.insert_child_at_index(icon,1);
-  },
-});
+  }
+};
 
-const SeparatorMenuItem = new Lang.Class({
-  Name: 'SeparatorMenuItem',
-  Extends: PopupMenu.PopupBaseMenuItem,
-  _init: function (text) {
-    this.parent({ reactive: false, can_focus: false});
+class SeparatorMenuItem extends PopupMenu.PopupBaseMenuItem {
+  constructor(text) {
+    super({ reactive: false, can_focus: false});
     this._separator = new St.Widget({ style_class: 'popup-separator-menu-item',
                                       y_expand: true,
                                       y_align: Clutter.ActorAlign.CENTER });
     this.actor.add(this._separator, { expand: true });
-  },
-});
+  }
+};
 
-const PassSearchProvider = new Lang.Class({
-  Name: 'PassSearchProvider',
-  Extends: Search.SearchProvider,
+class PassSearchProvider {
 
-  _results: [],
-
-  _init: function(getPassword){
+  constructor(getPassword){
+    this._results = [];
     this._getPassword = getPassword;
-  },
-  
-  _insertResults: function(routes){
+  }
+
+  _insertResults(routes){
     return routes.filter(r => r).map(route => {
       if(this._results.some(res => res.route === route)){
         return this._results.reduce((prev, curr, i) => curr.route === route ? i : prev, 0);
@@ -70,20 +63,20 @@ const PassSearchProvider = new Lang.Class({
         }) - 1;
       }
     });
-  },
-  
-  getInitialResultSet: function(terms, callback, cancellable){
+  }
+
+  getInitialResultSet(terms, callback, cancellable){
     let cmd = "find .password-store -regextype awk -regex '"+terms.map(term => ".*"+term+".*\.gpg").join("|")+"'";
     let [res, out, err, status] = GLib.spawn_command_line_sync(cmd);
     res = this._insertResults(out.toString().split('\n'));
     callback(res);
-  },
-  
-  getSubsearchResultSet: function(prevRes, terms, callback, cancellable){
+  }
+
+  getSubsearchResultSet(prevRes, terms, callback, cancellable){
     this.getInitialResultSet(terms, callback, cancellable);
-  },
-  
-  getResultMetas: function(results, callback, cancellable){
+  }
+
+  getResultMetas(results, callback, cancellable){
     const lresults = this._results;
     callback(results.map(function(resultId){
       return {
@@ -95,29 +88,27 @@ const PassSearchProvider = new Lang.Class({
             icon_size: size,
             icon_name: 'dialog-password',
           });
-        },
+        }
       };
     }));
-  },
-  
-  activateResult: function(result, terms){
+  }
+
+  activateResult(result, terms){
     this._getPassword(this._results[result].partialRoute);
-  },
-  
-  filterResults: function(providerResults, maxResults) {
+  }
+
+  filterResults(providerResults, maxResults) {
     return providerResults.slice(0,maxResults);
-  },
-});
+  }
+};
 
 
-const PasswordManager = new Lang.Class({
-  Name: 'PasswordManager',
-  Extends: PanelMenu.Button,
-  _current_directory: '/',
+class PasswordManager extends PanelMenu.Button {
 
-  _init: function(getPassword) {
+  constructor(getPassword) {
+    super(0.0);
+    this._current_directory = '/';
     this._getPassword = getPassword;
-    PanelMenu.Button.prototype._init.call(this, 0.0);
 
     let popupMenu = new ScrollablePopupMenu(this.actor, St.Align.START, St.Side.TOP);
     this.popupMenu = popupMenu;
@@ -136,25 +127,25 @@ const PasswordManager = new Lang.Class({
       Convenience.getSettings(),
       Meta.KeyBindingFlags.NONE,
       Shell.ActionMode.NORMAL,
-      Lang.bind(this, () => {
+      function() {
         this.popupMenu.open();
         this.popupMenu.box.get_children()[0].grab_key_focus();
-      })
+      }.bind(this)
     );
-  },
+  }
 
-  _change_dir: function(dir) {
+  _change_dir(dir) {
     this._current_directory = dir;
     this._draw_directory();
     this.popupMenu.box.get_children()[0].grab_key_focus();
-  },
+  }
 
-  _draw_directory: function() {
+  _draw_directory() {
     this.menu.removeAll();
     let item = new IconMenuItem('go-up',this._current_directory);
-    item.connect('activate', Lang.bind(this, function() {
+    item.connect('activate', function() {
       this._change_dir(this._current_directory.split("/").slice(0,-2).join("/") + "/");
-    }));
+    }.bind(this));
     this.menu.addMenuItem(item);
     this.menu.addMenuItem(new SeparatorMenuItem());
 
@@ -182,20 +173,20 @@ const PasswordManager = new Lang.Class({
       let menuElement;
       if(element.directory) {
         menuElement = new IconMenuItem('folder', element.name+"/");
-        menuElement.connect('activate', Lang.bind(this, function() {
+        menuElement.connect('activate', function() {
           this._change_dir(this._current_directory + element.name + "/");
-        }));
+        }.bind(this));
       } else {
         let name = element.name.split(".").slice(0,-1).join(".");
         menuElement = new IconMenuItem('dialog-password',name);
-        menuElement.connect('activate', Lang.bind(this, function(){
+        menuElement.connect('activate', function(){
           this._getPassword(this._current_directory + name);
-        }));
+        }.bind(this));
       }
       this.menu.addMenuItem(menuElement);
     });
   }
-});
+};
 
 let passwordManager;
 let searchProvider;
