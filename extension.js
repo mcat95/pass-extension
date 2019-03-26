@@ -31,6 +31,8 @@ class PassSearchProvider {
   constructor(getPassword){
     this._results = [];
     this._getPassword = getPassword;
+    this.isRemoteProvider = false;
+    this.canLaunchSearch = false;
   }
 
   _insertResults(routes){
@@ -60,19 +62,25 @@ class PassSearchProvider {
 
   getResultMetas(results, callback, cancellable){
     const lresults = this._results;
-    callback(results.map(function(resultId){
-      return {
-        id: resultId,
-        name: lresults[resultId].name,
-        description: 'Password for '+lresults[resultId].route,
-        createIcon: function(size) {
-          return new St.Icon({
-            icon_size: size,
-            icon_name: 'dialog-password',
-          });
-        }
-      };
-    }));
+    let metas = [];
+
+    for(let id in results) {
+      if (lresults[id]) {
+        metas.push({
+          id: id,
+          name: lresults[id].name,
+          description: 'Password for '+ lresults[id].route,
+          createIcon(size) {
+            return new St.Icon({
+              icon_size: size,
+              icon_name: 'dialog-password',
+            });
+          }
+        });
+      }
+    }
+
+    callback(metas);
   }
 
   activateResult(result, terms){
@@ -80,7 +88,7 @@ class PassSearchProvider {
   }
 
   filterResults(providerResults, maxResults) {
-    return providerResults.slice(0,maxResults);
+    return providerResults.slice(0, maxResults);
   }
 };
 
@@ -181,8 +189,6 @@ function enable() {
   Main.overview.viewSelector._searchResults._registerProvider(
     searchProvider
   );
-  //Main.overview.addSearchProvider(new PassSearchProvider());
-  log("Search provider added");
 }
 
 function disable() {
