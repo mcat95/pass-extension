@@ -26,24 +26,6 @@ const getPassword = route => GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, functi
   return false; // Don't repeat
 });
 
-class IconMenuItem extends PopupMenu.PopupMenuItem {
-  constructor(icon_name, text) {
-    super(text);
-    let icon = new St.Icon({icon_name: icon_name, icon_size: 25});
-    this.actor.insert_child_at_index(icon,1);
-  }
-};
-
-class SeparatorMenuItem extends PopupMenu.PopupBaseMenuItem {
-  constructor(text) {
-    super({ reactive: false, can_focus: false});
-    this._separator = new St.Widget({ style_class: 'popup-separator-menu-item',
-                                      y_expand: true,
-                                      y_align: Clutter.ActorAlign.CENTER });
-    this.actor.add(this._separator, { expand: true });
-  }
-};
-
 class PassSearchProvider {
 
   constructor(getPassword){
@@ -142,13 +124,14 @@ class PasswordManager extends PanelMenu.Button {
 
   _draw_directory() {
     this.menu.removeAll();
-    let item = new IconMenuItem('go-up',this._current_directory);
+    let item = new PopupMenu.PopupImageMenuItem(this._current_directory, 'go-up');
+
     item.connect('activate', function() {
       this._change_dir(this._current_directory.split("/").slice(0,-2).join("/") + "/");
     }.bind(this));
 
     this.menu.addMenuItem(item);
-    this.menu.addMenuItem(new SeparatorMenuItem());
+    this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
     let fd = Gio.file_new_for_path(".password-store/"+this._current_directory);
     let enumerator = fd.enumerate_children("standard::*", 0, null);
@@ -173,13 +156,13 @@ class PasswordManager extends PanelMenu.Button {
     }).forEach(element => {
       let menuElement;
       if(element.directory) {
-        menuElement = new IconMenuItem('folder', element.name+"/");
+        menuElement = new PopupMenu.PopupImageMenuItem(element.name + '/', 'folder');
         menuElement.connect('activate', function() {
           this._change_dir(this._current_directory + element.name + "/");
         }.bind(this));
       } else {
         let name = element.name.split(".").slice(0,-1).join(".");
-        menuElement = new IconMenuItem('dialog-password',name);
+        menuElement = new PopupMenu.PopupImageMenuItem(name, 'dialog-password');
         menuElement.connect('activate', function(){
           this._getPassword(this._current_directory + name);
         }.bind(this));
