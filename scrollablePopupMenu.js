@@ -1,6 +1,5 @@
 const BoxPointer = imports.ui.boxpointer;
 const Gtk = imports.gi.Gtk;
-const Lang = imports.lang;
 const PopupMenu = imports.ui.popupMenu;
 const St = imports.gi.St;
 
@@ -88,7 +87,7 @@ class ScrollablePopupMenu extends PopupMenu.PopupMenu {
     }
 
     addMenuItem(menuItem, position) {
-        this.parent(menuItem, position);
+        super.addMenuItem(menuItem, position);
         if (menuItem instanceof PopupMenu.PopupSubMenuMenuItem) {
             let menu = menuItem.menu;
             menu.connect('open-state-changed', function(item, open) {

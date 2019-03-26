@@ -1,8 +1,8 @@
 const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
-const Lang = imports.lang;
 const Main = imports.ui.main;
 const Meta = imports.gi.Meta;
+const GObject = imports.gi.GObject;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 const St = imports.gi.St;
@@ -103,10 +103,10 @@ class PassSearchProvider {
 };
 
 
+let PasswordManager = GObject.registerClass(
 class PasswordManager extends PanelMenu.Button {
-
-  constructor(getPassword) {
-    super(0.0);
+  _init(getPassword) {
+    super._init(0.0, null, false);
     this._current_directory = '/';
     this._getPassword = getPassword;
 
@@ -146,6 +146,7 @@ class PasswordManager extends PanelMenu.Button {
     item.connect('activate', function() {
       this._change_dir(this._current_directory.split("/").slice(0,-2).join("/") + "/");
     }.bind(this));
+
     this.menu.addMenuItem(item);
     this.menu.addMenuItem(new SeparatorMenuItem());
 
@@ -186,7 +187,7 @@ class PasswordManager extends PanelMenu.Button {
       this.menu.addMenuItem(menuElement);
     });
   }
-};
+});
 
 let passwordManager;
 let searchProvider;
@@ -207,4 +208,4 @@ function disable() {
   Main.overview.viewSelector._searchResults._unregisterProvider(
     searchProvider
   );
-}
+};
