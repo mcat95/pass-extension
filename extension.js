@@ -110,7 +110,7 @@ class PasswordManager extends PanelMenu.Button {
     this._current_directory = '/';
     this._getPassword = getPassword;
 
-    let popupMenu = new ScrollablePopupMenu(this.actor, St.Align.START, St.Side.TOP);
+    let popupMenu = new PopupMenu.PopupMenu(this.actor, St.Align.START, St.Side.TOP);
     this.popupMenu = popupMenu;
     this.setMenu(popupMenu);
 
