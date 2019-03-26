@@ -24,7 +24,7 @@ const getPassword = route => GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, functi
     null
   );
   return false; // Don't repeat
-}, null);
+});
 
 class IconMenuItem extends PopupMenu.PopupMenuItem {
   constructor(icon_name, text) {
