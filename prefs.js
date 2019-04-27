@@ -31,7 +31,7 @@ const COLUMN_MODS        = 3;
 let settings;
 
 function init() {
-    this.settings = Convenience.getSettings();
+    settings = Convenience.getSettings();
 }
 
 function buildPrefsWidget() {
