@@ -51,6 +51,7 @@ class PassSearchProvider {
 
   getInitialResultSet(terms, callback, cancellable){
     let cmd = "find .password-store -regextype awk -regex '"+terms.map(term => ".*"+term+".*\.gpg").join("|")+"'";
+    this._results = [];
     let [res, out, err, status] = GLib.spawn_command_line_sync(cmd);
     res = this._insertResults(out.toString().split('\n'));
     callback(res);
