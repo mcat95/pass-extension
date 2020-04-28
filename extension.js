@@ -142,6 +142,18 @@ class PasswordManager extends PanelMenu.Button {
     this.menu.addMenuItem(item);
     this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
+    let passSection = new PopupMenu.PopupMenuSection();
+
+    let scrollViewPassMenuSection = new PopupMenu.PopupMenuSection();
+    let passScrollView = new St.ScrollView({
+        overlay_scrollbars: true
+    });
+    passScrollView.add_actor(passSection.actor);
+
+    scrollViewPassMenuSection.actor.add_actor(passScrollView);
+    this.menu.addMenuItem(scrollViewPassMenuSection);
+
+
     let fd = Gio.file_new_for_path(".password-store/"+this._current_directory);
     let enumerator = fd.enumerate_children("standard::*", 0, null);
     let data = [];
@@ -176,7 +188,7 @@ class PasswordManager extends PanelMenu.Button {
           this._getPassword(this._current_directory + name);
         }.bind(this));
       }
-      this.menu.addMenuItem(menuElement);
+      passSection.addMenuItem(menuElement);
     });
   }
 });
