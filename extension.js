@@ -14,6 +14,7 @@ const Convenience = Me.imports.convenience;
 const Util = imports.misc.util;
 const Clutter = imports.gi.Clutter;
 const Search = imports.ui.search;
+const gicon = Gio.icon_new_for_string(`dialog-password`);
 
 const getPassword = route => GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, function() {
   let out = GLib.spawn_async(
@@ -26,14 +27,17 @@ const getPassword = route => GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, functi
   return false; // Don't repeat
 });
 
-class PassSearchProvider {
-
-  constructor(getPassword){
+const PassSearchProvider = {
+  appInfo: {
+        get_name: () => `Pass password manager`,
+        get_id: () => `pass-provider`,
+        get_icon: () => gicon,
+        should_show: () => true,
+    },
+  _init(getPassword) {
     this._results = [];
     this._getPassword = getPassword;
-    this.isRemoteProvider = false;
-    this.canLaunchSearch = false;
-  }
+  },
 
   _insertResults(routes){
     return routes.filter(r => r).map(route => {
@@ -47,7 +51,7 @@ class PassSearchProvider {
         }) - 1;
       }
     });
-  }
+  },
 
   getInitialResultSet(terms, callback, cancellable){
     let cmd = "find .password-store -regextype awk -regex '"+terms.map(term => ".*"+term+".*\.gpg").join("|")+"'";
@@ -55,11 +59,11 @@ class PassSearchProvider {
     let [res, out, err, status] = GLib.spawn_command_line_sync(cmd);
     res = this._insertResults(out.toString().split('\n'));
     callback(res);
-  }
+  },
 
   getSubsearchResultSet(prevRes, terms, callback, cancellable){
     this.getInitialResultSet(terms, callback, cancellable);
-  }
+  },
 
   getResultMetas(results, callback, cancellable){
     const lresults = this._results;
@@ -82,11 +86,11 @@ class PassSearchProvider {
     }
 
     callback(metas);
-  }
+  },
 
   activateResult(result, terms){
     this._getPassword(this._results[result].partialRoute);
-  }
+  },
 
   filterResults(providerResults, maxResults) {
     return providerResults.slice(0, maxResults);
@@ -196,18 +200,23 @@ class PasswordManager extends PanelMenu.Button {
 let passwordManager;
 let searchProvider;
 
+function getOverviewSearchResult() {
+  if (Main.overview.viewSelector !== undefined) {
+    return Main.overview.viewSelector._searchResults;
+  } else {
+    return Main.overview._overview.controls._searchController._searchResults;
+  }
+}
+
 function enable() {
   passwordManager = new PasswordManager(getPassword);
-  searchProvider = new PassSearchProvider(getPassword);
-  Main.overview.viewSelector._searchResults._registerProvider(
-    searchProvider
-  );
+  searchProvider = Object.create(PassSearchProvider);
+  searchProvider._init(getPassword);
+  getOverviewSearchResult()._registerProvider(searchProvider);
 }
 
 function disable() {
   Main.wm.removeKeybinding("show-menu-keybinding");
   passwordManager.destroy();
-  Main.overview.viewSelector._searchResults._unregisterProvider(
-    searchProvider
-  );
+  getOverviewSearchResult()._unregisterProvider(searchProvider);
 };
