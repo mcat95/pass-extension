@@ -37,7 +37,7 @@ function init() {
 function buildPrefsWidget() {
     let vbox = new Gtk.Box({
         orientation : Gtk.Orientation.VERTICAL,
-        margin : 10,
+        margin_start : 10,
         margin_top : 15,
         spacing : 10
     });
@@ -48,12 +48,15 @@ function buildPrefsWidget() {
 
     let scrolled = new Gtk.ScrolledWindow();
     scrolled.vexpand = true;
-    scrolled.add(treeView);
-    scrolled.show_all();
+    scrolled.set_child(treeView);
+    // In GTK4 all widgets are visible by default (except toplevel windows, popovers and dialogs).
+    // There isn't any need to use show_all() and destroy signal in your widget anymore.
+    //scrolled.show_all();
 
-    vbox.add(scrolled);
+    vbox.append(scrolled);
 
-    vbox.show_all();
+    // see scrolled.show_all() above
+    //vbox.show_all();
     return vbox;
 }
 

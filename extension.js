@@ -14,6 +14,7 @@ const Convenience = Me.imports.convenience;
 const Util = imports.misc.util;
 const Clutter = imports.gi.Clutter;
 const Search = imports.ui.search;
+const gicon = Gio.icon_new_for_string(`dialog-password`);
 
 const getPassword = route => GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, function() {
   let out = GLib.spawn_async(
@@ -26,13 +27,15 @@ const getPassword = route => GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, functi
   return false; // Don't repeat
 });
 
-class PassSearchProvider {
 
-  constructor(getPassword){
-    this._results = [];
-    this._getPassword = getPassword;
+let PassSearchProvider = GObject.registerClass(
+class PassSearchProvider extends GObject.Object {
+  constructor() {
+    this.id = 'pass-provider';
     this.isRemoteProvider = false;
     this.canLaunchSearch = false;
+    this._results = [];
+    this._getPassword = getPassword;
   }
 
   _insertResults(routes){
@@ -50,10 +53,10 @@ class PassSearchProvider {
   }
 
   getInitialResultSet(terms, callback, cancellable){
-    let cmd = "find .password-store -regextype awk -regex '"+terms.map(term => ".*"+term+".*\.gpg").join("|")+"'";
+    let cmd = "find .password-store -regextype awk -iregex '"+terms.map(term => ".*"+term+".*\.gpg").join("|")+"'";
     this._results = [];
     let [res, out, err, status] = GLib.spawn_command_line_sync(cmd);
-    res = this._insertResults(out.toString().split('\n'));
+    res = this._insertResults(String.fromCharCode(...out).split('\n'));
     callback(res);
   }
 
@@ -61,7 +64,7 @@ class PassSearchProvider {
     this.getInitialResultSet(terms, callback, cancellable);
   }
 
-  getResultMetas(results, callback, cancellable){
+  getResultMetas(results, callback){
     const lresults = this._results;
     let metas = [];
 
@@ -91,7 +94,7 @@ class PassSearchProvider {
   filterResults(providerResults, maxResults) {
     return providerResults.slice(0, maxResults);
   }
-};
+});
 
 
 let PasswordManager = GObject.registerClass(
@@ -101,7 +104,7 @@ class PasswordManager extends PanelMenu.Button {
     this._current_directory = '/';
     this._getPassword = getPassword;
 
-    let popupMenu = new PopupMenu.PopupMenu(this.actor, St.Align.START, St.Side.TOP);
+    let popupMenu = new PopupMenu.PopupMenu(this, St.Align.START, St.Side.TOP);
     this.popupMenu = popupMenu;
     this.setMenu(popupMenu);
 
@@ -109,7 +112,7 @@ class PasswordManager extends PanelMenu.Button {
     let icon = new St.Icon({icon_name: 'dialog-password-symbolic', style_class: 'system-status-icon'});
 
     hbox.add_child(icon);
-    this.actor.add_actor(hbox);
+    this.add_actor(hbox);
     Main.panel.addToStatusArea('passwordManager', this);
     this._draw_directory();
 
@@ -140,6 +143,22 @@ class PasswordManager extends PanelMenu.Button {
     }.bind(this));
 
     this.menu.addMenuItem(item);
+    let _entryItem = new PopupMenu.PopupBaseMenuItem({
+                reactive: false,
+                can_focus: false
+            });
+    let searchEntry = new St.Entry({
+                name: 'searchEntry',
+                style_class: 'search-entry',
+                can_focus: true,
+                hint_text: _('Search...(Not implemented)'),
+                track_hover: true,
+                x_expand: true,
+                y_expand: true
+            });
+    _entryItem.add(searchEntry);
+    //this.menu.addMenuItem(_entryItem);
+
     this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
     let passSection = new PopupMenu.PopupMenuSection();
@@ -194,20 +213,32 @@ class PasswordManager extends PanelMenu.Button {
 });
 
 let passwordManager;
-let searchProvider;
+let searchProvider = null;
+
+function getOverviewSearchResult() {
+  if (Main.overview.viewSelector !== undefined) {
+    return Main.overview.viewSelector._searchResults;
+  } else {
+    return Main.overview._overview.controls._searchController._searchResults;
+  }
+}
 
 function enable() {
   passwordManager = new PasswordManager(getPassword);
-  searchProvider = new PassSearchProvider(getPassword);
-  Main.overview.viewSelector._searchResults._registerProvider(
-    searchProvider
-  );
+  if (!searchProvider) {
+  searchProvider =  new PassSearchProvider();
+  getOverviewSearchResult()._registerProvider(searchProvider);
+  }
 }
 
 function disable() {
   Main.wm.removeKeybinding("show-menu-keybinding");
-  passwordManager.destroy();
-  Main.overview.viewSelector._searchResults._unregisterProvider(
-    searchProvider
-  );
+  if (passwordManager) {
+    passwordManager.destroy();
+    passwordManager = null;
+  }
+  if (searchProvider) {
+    getOverviewSearchResult()._unregisterProvider(searchProvider);
+    searchProvider = null;
+  }
 };
